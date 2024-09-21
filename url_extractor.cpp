@@ -37,7 +37,7 @@ string fetchWebPage(const string& url) {
 // Function to extract URLs from the page content
 vector<string> extractURLs(const string& htmlContent) {
     vector<string> urls;
-    regex urlRegex(R"(<a\s+(?:[^>]*?\s+)?href="([^"]*)")", regex::icase);
+    regex urlRegex(R"(<a\s+(?:[^>]*?\s+)?href="([^"]*)")"", regex::icase);
     smatch urlMatches;
     string::const_iterator searchStart(htmlContent.cbegin());
 
