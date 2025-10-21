@@ -46,3 +46,10 @@ g++ -std=c++11 -o url_extractor url_extractor.cpp -lcurl
 ## Notes:
 1. This program currently handles only basic href="..." tags in a web page. More complex HTML parsing (handling src attributes, JavaScript-based URLs, etc.) would require a more sophisticated HTML parser.
 1. You may need to modify the regular expression if you want to capture more complex patterns, such as relative URLs or URLs with other attributes.
+
+# Activity
+Can you modify the code to ask for a depth, and then recursively find all URL's to the depth.
+Consider: 
+1. What happenes if you follow a url to a page that you already visit?
+2. How can to prune the cycles?
+
