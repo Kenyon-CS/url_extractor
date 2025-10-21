@@ -6,13 +6,13 @@
 
 using namespace std;
 
+// Write callback for libcurl
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
 
 static string ensureScheme(string url) {
-    // If the user types "apple.com" or "kenyon.edu", assume https
     if (url.rfind("http://", 0) != 0 && url.rfind("https://", 0) != 0) {
         url = "https://" + url;
     }
@@ -30,14 +30,13 @@ string fetchWebPage(const string& rawUrl, long &httpCodeOut) {
         return "";
     }
 
-    // Common options
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);        // follow redirects
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 10L);
-    curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");        // enable gzip/deflate if available
+    curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, ""); // enable gzip/deflate
     curl_easy_setopt(curl, CURLOPT_USERAGENT,
-                     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 20L);
@@ -54,16 +53,14 @@ string fetchWebPage(const string& rawUrl, long &httpCodeOut) {
     return data;
 }
 
-// Matches: href="..."
-//          href='...'
-//          href=unquoted
+// Extract URLs (matches href="...", href='...', href=unquoted)
 vector<string> extractURLs(const string& htmlContent) {
     vector<string> urls;
 
-    // (?i) for case-insensitive; 3 capture groups for ", ', unquoted
+    // Use a custom raw-string delimiter: R"re(... )re"
     const regex urlRegex(
-        R"((?i)<a\b[^>]*\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))",
-        regex::ECMAScript);
+        R"re(<a\b[^>]*\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))re",
+        regex::ECMAScript | regex::icase);
 
     auto begin = sregex_iterator(htmlContent.begin(), htmlContent.end(), urlRegex);
     auto end   = sregex_iterator();
@@ -79,7 +76,6 @@ vector<string> extractURLs(const string& htmlContent) {
 }
 
 int main() {
-    // Initialize libcurl (optional in newer libcurl, but good practice)
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     string url;
@@ -88,13 +84,11 @@ int main() {
 
     long httpCode = 0;
     string content = fetchWebPage(url, httpCode);
-
     if (content.empty()) {
         cerr << "Failed to fetch content from the URL.\n";
         curl_global_cleanup();
         return 1;
     }
-
     if (httpCode < 200 || httpCode >= 300) {
         cerr << "Warning: HTTP status " << httpCode << ". Parsing anyway...\n";
     }
@@ -105,11 +99,9 @@ int main() {
     for (const auto& u : urls) {
         cout << u << '\n';
     }
-
     if (urls.empty()) {
-        // Debug hint: print a small preview so you can see what came back
-        cerr << "\n(No <a href=...> links matched.) First 400 chars of response:\n";
-        cerr << content.substr(0, 400) << "\n";
+        cerr << "\n(No <a href=...> links matched.) First 400 chars of response:\n"
+             << content.substr(0, 400) << "\n";
     }
 
     curl_global_cleanup();
